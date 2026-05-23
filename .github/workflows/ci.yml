@@ -1,0 +1,33 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  ci:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      # ignore-scripts=true の前提で再現的にインストール
+      - run: npm ci
+
+      # ネイティブ依存（sharp/esbuild/better-sqlite3 等）を使う場合はコメント解除
+      # - run: npm rebuild
+
+      - run: npm audit --audit-level=high
+
+      - run: npm run lint
+      - run: npm run typecheck
+
+      - run: npm test --if-present
+      - run: npm run build --if-present
