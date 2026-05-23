@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useMutation, useQuery } from "convex/react";
 import { useConvexAuth } from "convex/react";
 import { useState } from "react";
+import { Button, buttonVariants } from "@heroui/react";
 import { api } from "@/lib/convex";
 import {
   CARRY_METHOD_LABELS,
@@ -120,7 +121,7 @@ export default function HomePage() {
           </div>
           <Link
             href="/items/new"
-            className="inline-flex h-10 items-center justify-center rounded-xl border border-[#d45a00] bg-aws-orange px-4 text-sm font-semibold text-aws-ink shadow-sm hover:bg-aws-orange-hover"
+            className={buttonVariants({ variant: "primary", size: "md" })}
           >
             持込品を追加
           </Link>
@@ -225,17 +226,17 @@ export default function HomePage() {
               <div className="mt-3 flex gap-3">
                 <Link
                   href={`/items/${row._id}/edit`}
-                  className="rounded-lg border border-zinc-300 px-3 py-1.5 text-sm font-medium text-zinc-800"
+                  className={buttonVariants({ variant: "outline", size: "sm" })}
                 >
                   編集
                 </Link>
-                <button
-                  type="button"
-                  className="rounded-lg border border-red-200 px-3 py-1.5 text-sm font-medium text-red-700"
-                  onClick={() => void onCancel(row._id)}
+                <Button
+                  variant="danger-soft"
+                  size="sm"
+                  onPress={() => void onCancel(row._id)}
                 >
                   削除
-                </button>
+                </Button>
               </div>
             ) : null}
           </li>
@@ -300,20 +301,20 @@ export default function HomePage() {
                 </td>
                 <td className="whitespace-nowrap px-4 py-3">
                   {row.canEdit ? (
-                    <div className="flex gap-3">
+                    <div className="flex gap-2">
                       <Link
                         href={`/items/${row._id}/edit`}
-                        className="text-aws-link hover:text-aws-link-hover hover:underline"
+                        className={buttonVariants({ variant: "ghost", size: "sm" })}
                       >
                         編集
                       </Link>
-                      <button
-                        type="button"
-                        className="text-red-700 hover:underline"
-                        onClick={() => void onCancel(row._id)}
+                      <Button
+                        variant="danger-soft"
+                        size="sm"
+                        onPress={() => void onCancel(row._id)}
                       >
                         削除
-                      </button>
+                      </Button>
                     </div>
                   ) : (
                     <span className="text-zinc-400">—</span>
