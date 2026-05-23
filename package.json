@@ -8,6 +8,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
+    "typecheck": "tsc --noEmit",
     "convex:dev": "convex dev",
     "convex:kill-local-backend": "kill-port 3210 3211",
     "convex:seed": "convex run seed:seedDefaultEvent",
@@ -17,7 +18,9 @@
   "dependencies": {
     "@auth/core": "^0.37.4",
     "@convex-dev/auth": "^0.0.92",
+    "@heroui/react": "3.0.5",
     "convex": "^1.37.0",
+    "framer-motion": "12.40.0",
     "next": "16.2.6",
     "react": "19.2.4",
     "react-dom": "19.2.4"

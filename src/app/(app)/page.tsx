@@ -5,6 +5,13 @@ import Link from "next/link";
 import { useMutation, useQuery } from "convex/react";
 import { useConvexAuth } from "convex/react";
 import { useState } from "react";
+import {
+  Button,
+  buttonVariants,
+  ListBox,
+  SearchField,
+  Select,
+} from "@heroui/react";
 import { api } from "@/lib/convex";
 import {
   CARRY_METHOD_LABELS,
@@ -120,7 +127,7 @@ export default function HomePage() {
           </div>
           <Link
             href="/items/new"
-            className="inline-flex h-10 items-center justify-center rounded-xl border border-[#d45a00] bg-aws-orange px-4 text-sm font-semibold text-aws-ink shadow-sm hover:bg-aws-orange-hover"
+            className={buttonVariants({ variant: "primary", size: "md" })}
           >
             持込品を追加
           </Link>
@@ -131,47 +138,86 @@ export default function HomePage() {
         <span className="mb-1 self-center shrink-0 text-xs font-medium tracking-wide text-zinc-500">
           絞り込み
         </span>
-        <select
-          className="h-10 rounded-lg border border-zinc-300 bg-white px-3 text-zinc-900 shadow-sm ring-1 ring-zinc-900/10 focus:border-aws-orange focus:outline-none focus:ring-2 focus:ring-aws-orange/30"
-          value={catFilter}
-          onChange={(e) => setCatFilter(e.target.value as ItemCategory | "all")}
+        <Select
+          aria-label="区分で絞り込み"
+          selectedKey={catFilter}
+          onSelectionChange={(key) =>
+            setCatFilter(key as ItemCategory | "all")
+          }
+          className="min-w-[12rem]"
         >
-          <option value="all">区分（すべて）</option>
-          {(Object.keys(ITEM_CATEGORY_LABELS) as ItemCategory[]).map((k) => (
-            <option key={k} value={k}>
-              {ITEM_CATEGORY_LABELS[k]}
-            </option>
-          ))}
-        </select>
-        <select
-          className="h-10 rounded-lg border border-zinc-300 bg-white px-3 text-zinc-900 shadow-sm ring-1 ring-zinc-900/10 focus:border-aws-orange focus:outline-none focus:ring-2 focus:ring-aws-orange/30"
-          value={carryFilter}
-          onChange={(e) => setCarryFilter(e.target.value as CarryMethod | "all")}
+          <Select.Trigger>
+            <Select.Value />
+            <Select.Indicator />
+          </Select.Trigger>
+          <Select.Popover>
+            <ListBox>
+              <ListBox.Item id="all">区分（すべて）</ListBox.Item>
+              {(Object.keys(ITEM_CATEGORY_LABELS) as ItemCategory[]).map(
+                (k) => (
+                  <ListBox.Item key={k} id={k}>
+                    {ITEM_CATEGORY_LABELS[k]}
+                  </ListBox.Item>
+                ),
+              )}
+            </ListBox>
+          </Select.Popover>
+        </Select>
+        <Select
+          aria-label="持込み方法で絞り込み"
+          selectedKey={carryFilter}
+          onSelectionChange={(key) =>
+            setCarryFilter(key as CarryMethod | "all")
+          }
+          className="min-w-[12rem]"
         >
-          <option value="all">持込み方法（すべて）</option>
-          {(Object.keys(CARRY_METHOD_LABELS) as CarryMethod[]).map((k) => (
-            <option key={k} value={k}>
-              {CARRY_METHOD_LABELS[k]}
-            </option>
-          ))}
-        </select>
-        <select
-          className="h-10 rounded-lg border border-zinc-300 bg-white px-3 text-zinc-900 shadow-sm ring-1 ring-zinc-900/10 focus:border-aws-orange focus:outline-none focus:ring-2 focus:ring-aws-orange/30"
-          value={shipFilter}
-          onChange={(e) => setShipFilter(e.target.value as "all" | ShippingStatus)}
-          title="「発送前」は当日持参の品も含みます"
-          aria-label="発送状態で絞り込み"
+          <Select.Trigger>
+            <Select.Value />
+            <Select.Indicator />
+          </Select.Trigger>
+          <Select.Popover>
+            <ListBox>
+              <ListBox.Item id="all">持込み方法（すべて）</ListBox.Item>
+              {(Object.keys(CARRY_METHOD_LABELS) as CarryMethod[]).map((k) => (
+                <ListBox.Item key={k} id={k}>
+                  {CARRY_METHOD_LABELS[k]}
+                </ListBox.Item>
+              ))}
+            </ListBox>
+          </Select.Popover>
+        </Select>
+        <Select
+          aria-label="発送状態で絞り込み（「発送前」は当日持参の品も含みます）"
+          selectedKey={shipFilter}
+          onSelectionChange={(key) =>
+            setShipFilter(key as "all" | ShippingStatus)
+          }
+          className="min-w-[10rem]"
         >
-          <option value="all">発送（すべて）</option>
-          <option value="before_ship">発送前</option>
-          <option value="shipped">発送済み</option>
-        </select>
-        <input
-          className="h-10 min-w-[12rem] flex-1 rounded-lg border border-zinc-300 bg-white px-3 text-zinc-900 shadow-sm ring-1 ring-zinc-900/10 placeholder:text-zinc-400 focus:border-aws-orange focus:outline-none focus:ring-2 focus:ring-aws-orange/30"
+          <Select.Trigger>
+            <Select.Value />
+            <Select.Indicator />
+          </Select.Trigger>
+          <Select.Popover>
+            <ListBox>
+              <ListBox.Item id="all">発送（すべて）</ListBox.Item>
+              <ListBox.Item id="before_ship">発送前</ListBox.Item>
+              <ListBox.Item id="shipped">発送済み</ListBox.Item>
+            </ListBox>
+          </Select.Popover>
+        </Select>
+        <SearchField
+          aria-label="キーワード検索"
           value={keyword}
-          onChange={(e) => setKeyword(e.target.value)}
-          placeholder="キーワード検索"
-        />
+          onChange={setKeyword}
+          className="min-w-[12rem] flex-1"
+        >
+          <SearchField.Group>
+            <SearchField.SearchIcon />
+            <SearchField.Input placeholder="キーワード検索" />
+            <SearchField.ClearButton />
+          </SearchField.Group>
+        </SearchField>
       </div>
 
       <div className="flex flex-wrap items-center gap-2 text-sm">
@@ -225,17 +271,17 @@ export default function HomePage() {
               <div className="mt-3 flex gap-3">
                 <Link
                   href={`/items/${row._id}/edit`}
-                  className="rounded-lg border border-zinc-300 px-3 py-1.5 text-sm font-medium text-zinc-800"
+                  className={buttonVariants({ variant: "outline", size: "sm" })}
                 >
                   編集
                 </Link>
-                <button
-                  type="button"
-                  className="rounded-lg border border-red-200 px-3 py-1.5 text-sm font-medium text-red-700"
-                  onClick={() => void onCancel(row._id)}
+                <Button
+                  variant="danger-soft"
+                  size="sm"
+                  onPress={() => void onCancel(row._id)}
                 >
                   削除
-                </button>
+                </Button>
               </div>
             ) : null}
           </li>
@@ -300,20 +346,20 @@ export default function HomePage() {
                 </td>
                 <td className="whitespace-nowrap px-4 py-3">
                   {row.canEdit ? (
-                    <div className="flex gap-3">
+                    <div className="flex gap-2">
                       <Link
                         href={`/items/${row._id}/edit`}
-                        className="text-aws-link hover:text-aws-link-hover hover:underline"
+                        className={buttonVariants({ variant: "ghost", size: "sm" })}
                       >
                         編集
                       </Link>
-                      <button
-                        type="button"
-                        className="text-red-700 hover:underline"
-                        onClick={() => void onCancel(row._id)}
+                      <Button
+                        variant="danger-soft"
+                        size="sm"
+                        onPress={() => void onCancel(row._id)}
                       >
                         削除
-                      </button>
+                      </Button>
                     </div>
                   ) : (
                     <span className="text-zinc-400">—</span>
