@@ -1,7 +1,11 @@
-@import "tailwindcss";
+/*
+ * HeroUI v3 のスタイル（tailwindcss を内部で読み込み済み）。
+ * これにより Provider 不要で HeroUI コンポーネントが利用できる。
+ */
+@import "@heroui/react/styles";
 
 :root {
-  /* 背景は白、本文は AWS Squid Ink に近いトーン */
+  /* 背景は白、本文は AWS Squid Ink に近いトーン（HeroUI の default oklch を上書き） */
   --background: #ffffff;
   --foreground: #232f3e;
   /* AWS ブランドに寄せたアクセント（Smile Orange 系） */
@@ -12,6 +16,9 @@
   --aws-link: #0972d3;
   --aws-link-hover: #033160;
   --aws-tint: #fff4e6;
+  /* HeroUI のアクセント／フォーカスリング色を AWS オレンジに紐付け */
+  --accent: var(--aws-orange);
+  --accent-foreground: var(--aws-ink);
 }
 
 /* Tailwind の色ユーティリティは @theme でリテラル指定すると確実に解決される */
