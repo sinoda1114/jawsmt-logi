@@ -16,14 +16,14 @@
     "convex:auth-jwt": "npx @convex-dev/auth"
   },
   "dependencies": {
-    "@auth/core": "^0.37.4",
-    "@convex-dev/auth": "^0.0.92",
-    "@heroui/react": "3.0.5",
-    "convex": "^1.37.0",
+    "@auth/core": "^0.41.2",
+    "@convex-dev/auth": "^0.0.93",
+    "@heroui/react": "3.1.0",
+    "convex": "^1.40.0",
     "framer-motion": "12.40.0",
-    "next": "16.2.6",
-    "react": "19.2.4",
-    "react-dom": "19.2.4"
+    "next": "16.2.7",
+    "react": "19.2.7",
+    "react-dom": "19.2.7"
   },
   "overrides": {
     "postcss": ">=8.5.10"
@@ -34,7 +34,7 @@
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "eslint": "^9",
-    "eslint-config-next": "16.2.6",
+    "eslint-config-next": "16.2.7",
     "kill-port": "^2.0.1",
     "tailwindcss": "^4",
     "typescript": "^5"
