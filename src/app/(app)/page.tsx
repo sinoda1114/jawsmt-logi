@@ -1,5 +1,6 @@
 "use client";
 
+import type { CSSProperties, PointerEvent as ReactPointerEvent } from "react";
 import type { Id } from "../../../convex/_generated/dataModel";
 import Link from "next/link";
 import { useMutation, useQuery } from "convex/react";
@@ -11,6 +12,7 @@ import {
   ListBox,
   SearchField,
   Select,
+  Tooltip,
 } from "@heroui/react";
 import { api } from "@/lib/convex";
 import {
@@ -21,6 +23,44 @@ import {
   type ItemCategory,
   type ShippingStatus,
 } from "@/lib/labels";
+
+type TableColumnKey =
+  | "displayName"
+  | "accountName"
+  | "category"
+  | "itemName"
+  | "quantity"
+  | "carryMethod"
+  | "shippingStatus"
+  | "memo"
+  | "updatedAt"
+  | "actions";
+
+type TableColumn = {
+  key: TableColumnKey;
+  label: string;
+  width: number;
+  min: number;
+  max: number;
+  resizable?: boolean;
+};
+
+const TABLE_COLUMNS: TableColumn[] = [
+  { key: "displayName", label: "名前", width: 124, min: 96, max: 220, resizable: true },
+  { key: "accountName", label: "コンパスアカウント名", width: 164, min: 128, max: 260, resizable: true },
+  { key: "category", label: "区分", width: 86, min: 72, max: 132 },
+  { key: "itemName", label: "品名", width: 240, min: 160, max: 420, resizable: true },
+  { key: "quantity", label: "量", width: 170, min: 100, max: 280, resizable: true },
+  { key: "carryMethod", label: "持込み方法", width: 116, min: 104, max: 168 },
+  { key: "shippingStatus", label: "発送", width: 104, min: 88, max: 140 },
+  { key: "memo", label: "備考", width: 230, min: 140, max: 420, resizable: true },
+  { key: "updatedAt", label: "更新", width: 106, min: 92, max: 140 },
+  { key: "actions", label: "操作", width: 96, min: 84, max: 128 },
+];
+
+const TABLE_COLUMN_DEFAULT_WIDTHS = Object.fromEntries(
+  TABLE_COLUMNS.map((column) => [column.key, column.width]),
+) as Record<TableColumnKey, number>;
 
 export default function HomePage() {
   const { isLoading, isAuthenticated } = useConvexAuth();
@@ -34,6 +74,7 @@ export default function HomePage() {
   /** 発送前＝当日持参を含む／発送済み＝事前送付かつ発送済みのみ */
   const [shipFilter, setShipFilter] = useState<"all" | ShippingStatus>("all");
   const [keyword, setKeyword] = useState("");
+  const [columnWidths, setColumnWidths] = useState(TABLE_COLUMN_DEFAULT_WIDTHS);
 
   const items = data?.items ?? [];
   const filtered = items.filter((row) => {
@@ -86,6 +127,43 @@ export default function HomePage() {
       alert(e instanceof Error ? e.message : "削除に失敗しました");
     }
   }
+
+  function onColumnResizeStart(
+    column: TableColumn,
+    event: ReactPointerEvent<HTMLButtonElement>,
+  ) {
+    if (!column.resizable) return;
+
+    event.preventDefault();
+    const startX = event.clientX;
+    const startWidth = columnWidths[column.key];
+
+    function onPointerMove(moveEvent: PointerEvent) {
+      const nextWidth = Math.min(
+        column.max,
+        Math.max(column.min, startWidth + moveEvent.clientX - startX),
+      );
+      setColumnWidths((current) => ({
+        ...current,
+        [column.key]: nextWidth,
+      }));
+    }
+
+    function onPointerUp() {
+      window.removeEventListener("pointermove", onPointerMove);
+      window.removeEventListener("pointerup", onPointerUp);
+      window.removeEventListener("pointercancel", onPointerUp);
+    }
+
+    window.addEventListener("pointermove", onPointerMove);
+    window.addEventListener("pointerup", onPointerUp);
+    window.addEventListener("pointercancel", onPointerUp);
+  }
+
+  const tableWidth = TABLE_COLUMNS.reduce(
+    (total, column) => total + columnWidths[column.key],
+    0,
+  );
 
   if (isLoading || !isAuthenticated) {
     return (
@@ -289,45 +367,52 @@ export default function HomePage() {
       </ul>
 
       <div className="hidden w-full overflow-x-auto rounded-xl border border-zinc-200 bg-white shadow-sm sm:block">
-        <table className="w-full min-w-[1080px] table-auto text-left text-sm">
+        <table
+          className="w-full table-fixed text-left text-sm"
+          style={{ minWidth: tableWidth } satisfies CSSProperties}
+        >
+          <colgroup>
+            {TABLE_COLUMNS.map((column) => (
+              <col key={column.key} style={{ width: columnWidths[column.key] }} />
+            ))}
+          </colgroup>
           <thead className="border-b border-zinc-200 bg-zinc-50 text-xs font-semibold uppercase tracking-wide text-zinc-700">
             <tr>
-              <th className="whitespace-nowrap px-4 py-3">名前</th>
-              <th className="whitespace-nowrap px-4 py-3">コンパスアカウント名</th>
-              <th className="whitespace-nowrap px-4 py-3">区分</th>
-              <th className="whitespace-nowrap px-4 py-3">品名</th>
-              <th className="whitespace-nowrap px-4 py-3">量</th>
-              <th className="whitespace-nowrap px-4 py-3">持込み方法</th>
-              <th className="whitespace-nowrap px-4 py-3">発送</th>
-              <th className="whitespace-nowrap px-4 py-3">備考</th>
-              <th className="whitespace-nowrap px-4 py-3">更新</th>
-              <th className="whitespace-nowrap px-4 py-3">操作</th>
+              {TABLE_COLUMNS.map((column) => (
+                <ResizableHeader
+                  key={column.key}
+                  column={column}
+                  onResizeStart={onColumnResizeStart}
+                />
+              ))}
             </tr>
           </thead>
           <tbody className="divide-y divide-zinc-100">
             {filtered.map((row) => (
               <tr key={row._id} className="hover:bg-zinc-50/80">
-                <td className="min-w-[6rem] whitespace-normal px-4 py-3 font-medium text-zinc-900">
-                  {row.display_name}
+                <td className="overflow-hidden px-4 py-3 font-medium text-zinc-900">
+                  <OverflowTooltip text={row.display_name} className="line-clamp-2 whitespace-normal" />
                 </td>
-                <td className="min-w-[11rem] max-w-[16rem] truncate px-4 py-3 text-zinc-800">
-                  {row.convex_account_name?.trim() ? row.convex_account_name : "—"}
+                <td className="overflow-hidden px-4 py-3 text-zinc-800">
+                  <OverflowTooltip text={row.convex_account_name?.trim() ? row.convex_account_name : "—"} />
                 </td>
-                <td className="whitespace-nowrap px-4 py-3">
+                <td className="overflow-hidden px-4 py-3">
                   <span className="inline-flex shrink-0 items-center whitespace-nowrap rounded-full bg-zinc-100 px-2 py-0.5 text-xs font-medium text-zinc-700">
                     {ITEM_CATEGORY_LABELS[row.item_category]}
                   </span>
                 </td>
-                <td className="max-w-xs whitespace-normal break-words px-4 py-3 text-zinc-900">
-                  {row.item_name}
+                <td className="overflow-hidden px-4 py-3 text-zinc-900">
+                  <OverflowTooltip text={row.item_name} className="line-clamp-2 whitespace-normal break-words" />
                 </td>
-                <td className="whitespace-nowrap px-4 py-3 text-zinc-800">{row.quantity}</td>
-                <td className="whitespace-nowrap px-4 py-3">
+                <td className="overflow-hidden px-4 py-3 text-zinc-800">
+                  <OverflowTooltip text={row.quantity} />
+                </td>
+                <td className="overflow-hidden px-4 py-3">
                   <span className="inline-flex shrink-0 items-center whitespace-nowrap rounded-full bg-aws-tint px-2 py-0.5 text-xs font-medium text-aws-ink">
                     {CARRY_METHOD_LABELS[row.carry_method]}
                   </span>
                 </td>
-                <td className="whitespace-nowrap px-4 py-3 text-zinc-700">
+                <td className="overflow-hidden px-4 py-3 text-zinc-700">
                   {row.carry_method === "ship_in_advance" ? (
                     <span
                       className={`inline-flex shrink-0 items-center whitespace-nowrap px-2 py-0.5 text-xs font-semibold ${shippingStatusPillClass(row.shipping_status)}`}
@@ -338,13 +423,13 @@ export default function HomePage() {
                     <span className="text-zinc-400">—</span>
                   )}
                 </td>
-                <td className="max-w-[10rem] truncate px-4 py-3 text-zinc-700">
-                  {row.memo ?? "—"}
+                <td className="overflow-hidden px-4 py-3 text-zinc-700">
+                  <OverflowTooltip text={row.memo ?? "—"} />
                 </td>
-                <td className="whitespace-nowrap px-4 py-3 text-zinc-700">
-                  {formatCompactDateTime(row.updated_at)}
+                <td className="overflow-hidden px-4 py-3 text-zinc-700">
+                  <OverflowTooltip text={formatCompactDateTime(row.updated_at)} />
                 </td>
-                <td className="whitespace-nowrap px-4 py-3">
+                <td className="overflow-hidden px-4 py-3">
                   {row.canEdit ? (
                     <div className="flex gap-2">
                       <Link
@@ -377,6 +462,52 @@ export default function HomePage() {
         </p>
       ) : null}
     </div>
+  );
+}
+
+function ResizableHeader(props: {
+  column: TableColumn;
+  onResizeStart: (column: TableColumn, event: ReactPointerEvent<HTMLButtonElement>) => void;
+}) {
+  const { column, onResizeStart } = props;
+
+  return (
+    <th className="relative overflow-hidden whitespace-nowrap px-4 py-3">
+      <span className="block truncate pr-2">{column.label}</span>
+      {column.resizable ? (
+        <button
+          type="button"
+          aria-label={`${column.label}列の幅を変更`}
+          className="absolute right-0 top-0 h-full w-2 cursor-col-resize touch-none border-r border-transparent transition hover:border-aws-orange focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-aws-orange"
+          onPointerDown={(event) => onResizeStart(column, event)}
+        />
+      ) : null}
+    </th>
+  );
+}
+
+function OverflowTooltip(props: { text: string; className?: string }) {
+  const { text, className = "truncate whitespace-nowrap" } = props;
+  const isEmpty = text === "—";
+
+  if (isEmpty) {
+    return <span className="block truncate whitespace-nowrap text-zinc-400">—</span>;
+  }
+
+  return (
+    <Tooltip delay={300}>
+      <Tooltip.Trigger className="block min-w-0">
+        <span tabIndex={0} className={`block min-w-0 ${className}`}>
+          {text}
+        </span>
+      </Tooltip.Trigger>
+      <Tooltip.Content
+        showArrow
+        className="max-w-[min(28rem,calc(100vw-2rem))] whitespace-pre-wrap break-words text-sm leading-relaxed"
+      >
+        {text}
+      </Tooltip.Content>
+    </Tooltip>
   );
 }
 
