@@ -36,6 +36,21 @@ type TableColumnKey =
   | "updatedAt"
   | "actions";
 
+type SortableColumnKey = Exclude<TableColumnKey, "actions">;
+type SortDirection = "asc" | "desc";
+
+type SortableRow = {
+  display_name: string;
+  convex_account_name?: string;
+  item_category: ItemCategory;
+  item_name: string;
+  quantity: string;
+  carry_method: CarryMethod;
+  shipping_status?: ShippingStatus;
+  memo?: string;
+  updated_at: number;
+};
+
 type TableColumn = {
   key: TableColumnKey;
   label: string;
@@ -43,18 +58,19 @@ type TableColumn = {
   min: number;
   max: number;
   resizable?: boolean;
+  sortable?: boolean;
 };
 
 const TABLE_COLUMNS: TableColumn[] = [
-  { key: "displayName", label: "名前", width: 124, min: 96, max: 220, resizable: true },
-  { key: "accountName", label: "コンパスアカウント名", width: 164, min: 128, max: 260, resizable: true },
-  { key: "category", label: "区分", width: 86, min: 72, max: 132 },
-  { key: "itemName", label: "品名", width: 240, min: 160, max: 420, resizable: true },
-  { key: "quantity", label: "量", width: 170, min: 100, max: 280, resizable: true },
-  { key: "carryMethod", label: "持込み方法", width: 116, min: 104, max: 168 },
-  { key: "shippingStatus", label: "発送", width: 104, min: 88, max: 140 },
-  { key: "memo", label: "備考", width: 230, min: 140, max: 420, resizable: true },
-  { key: "updatedAt", label: "更新", width: 106, min: 92, max: 140 },
+  { key: "displayName", label: "名前", width: 124, min: 96, max: 220, resizable: true, sortable: true },
+  { key: "accountName", label: "コンパスアカウント名", width: 164, min: 128, max: 260, resizable: true, sortable: true },
+  { key: "category", label: "区分", width: 86, min: 72, max: 132, sortable: true },
+  { key: "itemName", label: "品名", width: 240, min: 160, max: 420, resizable: true, sortable: true },
+  { key: "quantity", label: "量", width: 170, min: 100, max: 280, resizable: true, sortable: true },
+  { key: "carryMethod", label: "持込み方法", width: 116, min: 104, max: 168, sortable: true },
+  { key: "shippingStatus", label: "発送", width: 104, min: 88, max: 140, sortable: true },
+  { key: "memo", label: "備考", width: 230, min: 140, max: 420, resizable: true, sortable: true },
+  { key: "updatedAt", label: "更新", width: 106, min: 92, max: 140, sortable: true },
   { key: "actions", label: "操作", width: 148, min: 132, max: 180 },
 ];
 
@@ -75,6 +91,10 @@ export default function HomePage() {
   const [shipFilter, setShipFilter] = useState<"all" | ShippingStatus>("all");
   const [keyword, setKeyword] = useState("");
   const [columnWidths, setColumnWidths] = useState(TABLE_COLUMN_DEFAULT_WIDTHS);
+  const [sort, setSort] = useState<{ key: SortableColumnKey; direction: SortDirection }>({
+    key: "updatedAt",
+    direction: "desc",
+  });
 
   const items = data?.items ?? [];
   const filtered = items.filter((row) => {
@@ -111,6 +131,12 @@ export default function HomePage() {
       if (!searchable.includes(query)) return false;
     }
     return true;
+  });
+
+  const sorted = [...filtered].sort((a, b) => {
+    const result = compareRows(a, b, sort.key);
+    if (result !== 0) return sort.direction === "asc" ? result : -result;
+    return b.updated_at - a.updated_at;
   });
 
   const summaryByCategory = (Object.keys(ITEM_CATEGORY_LABELS) as ItemCategory[]).map((key) => ({
@@ -158,6 +184,15 @@ export default function HomePage() {
     window.addEventListener("pointermove", onPointerMove);
     window.addEventListener("pointerup", onPointerUp);
     window.addEventListener("pointercancel", onPointerUp);
+  }
+
+  function onSort(column: TableColumn) {
+    if (!column.sortable || column.key === "actions") return;
+    const key = column.key;
+    setSort((current) => ({
+      key,
+      direction: current.key === key && current.direction === "asc" ? "desc" : "asc",
+    }));
   }
 
   const tableWidth = TABLE_COLUMNS.reduce(
@@ -315,7 +350,7 @@ export default function HomePage() {
       </div>
 
       <ul className="space-y-3 sm:hidden">
-        {filtered.map((row) => (
+        {sorted.map((row) => (
           <li
             key={row._id}
             className="rounded-xl border border-zinc-200 bg-white p-4 shadow-sm"
@@ -382,13 +417,15 @@ export default function HomePage() {
                 <ResizableHeader
                   key={column.key}
                   column={column}
+                  sort={sort}
+                  onSort={onSort}
                   onResizeStart={onColumnResizeStart}
                 />
               ))}
             </tr>
           </thead>
           <tbody className="divide-y divide-zinc-100">
-            {filtered.map((row) => (
+            {sorted.map((row) => (
               <tr key={row._id} className="hover:bg-zinc-50/80">
                 <td className="overflow-hidden px-4 py-3 font-medium text-zinc-900">
                   <OverflowTooltip text={row.display_name} className="line-clamp-2 whitespace-normal" />
@@ -468,23 +505,89 @@ export default function HomePage() {
 
 function ResizableHeader(props: {
   column: TableColumn;
+  sort: { key: SortableColumnKey; direction: SortDirection };
+  onSort: (column: TableColumn) => void;
   onResizeStart: (column: TableColumn, event: ReactPointerEvent<HTMLButtonElement>) => void;
 }) {
-  const { column, onResizeStart } = props;
+  const { column, sort, onSort, onResizeStart } = props;
+  const isSorted = column.sortable && column.key === sort.key;
+  const sortLabel = isSorted ? (sort.direction === "asc" ? "昇順" : "降順") : "未ソート";
 
   return (
-    <th className="relative overflow-hidden whitespace-nowrap px-4 py-3">
-      <span className="block truncate pr-2">{column.label}</span>
+    <th
+      aria-sort={
+        isSorted ? (sort.direction === "asc" ? "ascending" : "descending") : "none"
+      }
+      className="relative overflow-hidden whitespace-nowrap px-4 py-3"
+    >
+      {column.sortable ? (
+        <button
+          type="button"
+          className="flex w-full min-w-0 items-center gap-1 pr-2 text-left transition hover:text-aws-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-aws-orange"
+          onClick={() => onSort(column)}
+        >
+          <span className="block min-w-0 truncate">{column.label}</span>
+          <span className={`shrink-0 text-[10px] ${isSorted ? "text-aws-orange" : "text-zinc-400"}`}>
+            {isSorted ? (sort.direction === "asc" ? "↑" : "↓") : "↕"}
+          </span>
+          <span className="sr-only">{sortLabel}</span>
+        </button>
+      ) : (
+        <span className="block truncate pr-2">{column.label}</span>
+      )}
       {column.resizable ? (
         <button
           type="button"
           aria-label={`${column.label}列の幅を変更`}
           className="absolute right-0 top-0 h-full w-2 cursor-col-resize touch-none border-r border-transparent transition hover:border-aws-orange focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-aws-orange"
-          onPointerDown={(event) => onResizeStart(column, event)}
+          onPointerDown={(event) => {
+            event.stopPropagation();
+            onResizeStart(column, event);
+          }}
         />
       ) : null}
     </th>
   );
+}
+
+function compareRows(
+  a: SortableRow,
+  b: SortableRow,
+  key: SortableColumnKey,
+) {
+  if (key === "updatedAt") return a.updated_at - b.updated_at;
+
+  const aValue = sortValue(a, key);
+  const bValue = sortValue(b, key);
+  return aValue.localeCompare(bValue, "ja-JP", {
+    numeric: true,
+    sensitivity: "base",
+  });
+}
+
+function sortValue(row: SortableRow, key: SortableColumnKey) {
+  switch (key) {
+    case "displayName":
+      return row.display_name;
+    case "accountName":
+      return row.convex_account_name ?? "";
+    case "category":
+      return ITEM_CATEGORY_LABELS[row.item_category];
+    case "itemName":
+      return row.item_name;
+    case "quantity":
+      return row.quantity;
+    case "carryMethod":
+      return CARRY_METHOD_LABELS[row.carry_method];
+    case "shippingStatus":
+      return row.carry_method === "ship_in_advance"
+        ? SHIPPING_STATUS_LABELS[row.shipping_status ?? "before_ship"]
+        : "";
+    case "memo":
+      return row.memo ?? "";
+    case "updatedAt":
+      return "";
+  }
 }
 
 function OverflowTooltip(props: { text: string; className?: string }) {
