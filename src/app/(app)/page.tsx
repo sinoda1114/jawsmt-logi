@@ -55,7 +55,7 @@ const TABLE_COLUMNS: TableColumn[] = [
   { key: "shippingStatus", label: "発送", width: 104, min: 88, max: 140 },
   { key: "memo", label: "備考", width: 230, min: 140, max: 420, resizable: true },
   { key: "updatedAt", label: "更新", width: 106, min: 92, max: 140 },
-  { key: "actions", label: "操作", width: 96, min: 84, max: 128 },
+  { key: "actions", label: "操作", width: 148, min: 132, max: 180 },
 ];
 
 const TABLE_COLUMN_DEFAULT_WIDTHS = Object.fromEntries(
@@ -429,18 +429,19 @@ export default function HomePage() {
                 <td className="overflow-hidden px-4 py-3 text-zinc-700">
                   <OverflowTooltip text={formatCompactDateTime(row.updated_at)} />
                 </td>
-                <td className="overflow-hidden px-4 py-3">
+                <td className="overflow-hidden px-3 py-3">
                   {row.canEdit ? (
-                    <div className="flex gap-2">
+                    <div className="flex flex-nowrap items-center justify-end gap-1">
                       <Link
                         href={`/items/${row._id}/edit`}
-                        className={buttonVariants({ variant: "ghost", size: "sm" })}
+                        className={`${buttonVariants({ variant: "ghost", size: "sm" })} shrink-0`}
                       >
                         編集
                       </Link>
                       <Button
                         variant="danger-soft"
                         size="sm"
+                        className="shrink-0"
                         onPress={() => void onCancel(row._id)}
                       >
                         削除
