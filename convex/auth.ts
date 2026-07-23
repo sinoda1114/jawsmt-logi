@@ -24,9 +24,14 @@ export const { auth, signIn, signOut, store, isAuthenticated } = convexAuth({
           ? (profile as { id: string }).id
           : undefined;
 
+      // 既に管理者が is_active: false（無効化）にしたユーザーは、再ログインしても
+      // 無効化状態を維持する。新規ユーザーは is_active 未設定なので true になる。
+      const existing = await ctx.db.get(userId);
+      const shouldStayActive = existing?.is_active !== false;
+
       await ctx.db.patch(userId, {
         role,
-        is_active: true,
+        ...(shouldStayActive ? { is_active: true } : {}),
         last_login_at: Date.now(),
         ...(google_sub !== undefined ? { google_sub } : {}),
       });

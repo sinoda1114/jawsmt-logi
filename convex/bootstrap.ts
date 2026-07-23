@@ -18,9 +18,11 @@ export const ensureEventMembership = mutation({
 
     const email = user.email ?? undefined;
     const role = resolveRoleForEmail(email);
+    // 無効化済み(is_active: false)のユーザーはここで true に戻さない。
+    const shouldStayActive = user.is_active !== false;
     await ctx.db.patch(userId, {
       role,
-      is_active: true,
+      ...(shouldStayActive ? { is_active: true } : {}),
       last_login_at: Date.now(),
     });
 

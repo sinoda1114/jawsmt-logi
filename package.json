@@ -9,6 +9,8 @@
     "start": "next start",
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
     "convex:dev": "convex dev",
     "convex:kill-local-backend": "kill-port 3210 3211",
     "convex:seed": "convex run seed:seedDefaultEvent",
@@ -21,22 +23,26 @@
     "@heroui/react": "3.0.5",
     "convex": "^1.37.0",
     "framer-motion": "12.40.0",
-    "next": "16.2.6",
+    "next": "16.2.11",
     "react": "19.2.4",
     "react-dom": "19.2.4"
   },
   "overrides": {
-    "postcss": ">=8.5.10"
+    "postcss": ">=8.5.10",
+    "sharp": ">=0.35.0"
   },
   "devDependencies": {
+    "@edge-runtime/vm": "5.0.0",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "convex-test": "0.0.54",
     "eslint": "^9",
-    "eslint-config-next": "16.2.6",
+    "eslint-config-next": "16.2.11",
     "kill-port": "^2.0.1",
     "tailwindcss": "^4",
-    "typescript": "^5"
+    "typescript": "^5",
+    "vitest": "4.1.10"
   }
 }
