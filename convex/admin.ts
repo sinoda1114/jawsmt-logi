@@ -23,6 +23,9 @@ async function requireAdmin(ctx: DbCtx) {
   if (user === null || user.role !== "admin") {
     throw new Error("管理者権限が必要です");
   }
+  if (user.is_active === false) {
+    throw new Error("アカウントが無効化されています");
+  }
   return { userId, user };
 }
 

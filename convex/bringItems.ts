@@ -26,6 +26,9 @@ async function requireUser(ctx: DbCtx) {
   if (user === null) {
     throw new Error("認証が必要です");
   }
+  if (user.is_active === false) {
+    throw new Error("アカウントが無効化されています");
+  }
   return { userId, user };
 }
 
